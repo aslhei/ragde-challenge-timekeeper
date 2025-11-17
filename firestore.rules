@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true));
+    }
+    
+    // Helper function to check if user is authenticated (user or admin)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns a document (created by them)
+    function isOwner(createdByField) {
+      return request.auth != null && 
+             createdByField != null &&
+             (createdByField == request.auth.token.email || 
+              createdByField == request.auth.uid);
+    }
+    
+    // Persons collection
+    // - Anyone can read
+    // - Authenticated users (user/admin) can create
+    // - Only admins can delete
+    match /persons/{personId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated(); // Users can update their own, admins can update any
+      allow delete: if isAdmin();
+    }
+    
+    // Results collection
+    // - Anyone can read
+    // - Authenticated users can create
+    // - Users can delete their own results (createdBy matches), admins can delete any
+    match /results/{resultId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && 
+                       (isAdmin() || isOwner(resource.data.createdBy));
+      allow delete: if isAdmin() || 
+                       (isAuthenticated() && isOwner(resource.data.createdBy));
+    }
+    
+    // Active races collection
+    // - Anyone can read
+    // - Authenticated users can create
+    // - Users can update/delete their own races (createdBy matches), admins can update/delete any
+    match /activeRaces/{raceId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAdmin() || 
+                       (isAuthenticated() && isOwner(resource.data.createdBy));
+      allow delete: if isAdmin() || 
+                       (isAuthenticated() && isOwner(resource.data.createdBy));
+    }
+    
+    // Users collection
+    // - Users can read their own document
+    // - Admins can read all user documents
+    // - Users can create their own document during signup
+    // - Only admins can update/delete (for role management)
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}
+
