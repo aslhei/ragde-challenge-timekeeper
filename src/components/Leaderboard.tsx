@@ -302,7 +302,7 @@ export function Leaderboard({ activeRaces = [] }: LeaderboardProps) {
                       >
                         Treadmill {sortField === 'treadmill' && (sortDirection === 'asc' ? '↑' : '↓')}
                       </th>
-                      {viewMode === 'detailed' && <th>Treadmill Pace</th>}
+                      {viewMode === 'detailed' && <th className="pace-header-desktop">Treadmill Pace</th>}
                       <th 
                         className="sortable" 
                         onClick={() => handleSort('skiErg')}
@@ -310,7 +310,7 @@ export function Leaderboard({ activeRaces = [] }: LeaderboardProps) {
                       >
                         SkiErg {sortField === 'skiErg' && (sortDirection === 'asc' ? '↑' : '↓')}
                       </th>
-                      {viewMode === 'detailed' && <th>SkiErg Pace</th>}
+                      {viewMode === 'detailed' && <th className="pace-header-desktop">SkiErg Pace</th>}
                       <th 
                         className="sortable" 
                         onClick={() => handleSort('rowing')}
@@ -318,7 +318,7 @@ export function Leaderboard({ activeRaces = [] }: LeaderboardProps) {
                       >
                         Rowing {sortField === 'rowing' && (sortDirection === 'asc' ? '↑' : '↓')}
                       </th>
-                      {viewMode === 'detailed' && <th>Rowing Pace</th>}
+                      {viewMode === 'detailed' && <th className="pace-header-desktop">Rowing Pace</th>}
                     </>
                   )}
                   <th 
@@ -330,7 +330,6 @@ export function Leaderboard({ activeRaces = [] }: LeaderboardProps) {
                   </th>
                 </tr>
               </thead>
-              <tbody>
             {sortedResults.map((result, index) => {
               const treadmillSplit = result.splits.find(s => s.discipline === 'treadmill');
               const skiErgSplit = result.splits.find(s => s.discipline === 'skiErg');
@@ -338,48 +337,76 @@ export function Leaderboard({ activeRaces = [] }: LeaderboardProps) {
               const isEstimated = 'isEstimated' in result && Boolean(result.isEstimated);
               
               return (
-                    <tr key={result.id} className={isEstimated ? 'estimated-row' : ''}>
-                      <td className="rank">{index + 1}</td>
-                      <td className="name">
-                        {result.personName}
-                        {isEstimated && <span className="estimated-badge">(Est.)</span>}
-                      </td>
-                      {viewMode !== 'simple' && (
-                        <>
-                          <td className={treadmillSplit && (treadmillSplit as any).isEstimated ? 'estimated-split' : ''}>
-                            {treadmillSplit ? formatTimeHMS(treadmillSplit.time) : '-'}
-                          </td>
-                          {viewMode === 'detailed' && (
-                            <td className={`pace ${treadmillSplit ? getPaceColor(calculateTreadmillPace(treadmillSplit.time), 'treadmill') : ''}`}>
-                              {treadmillSplit ? formatTreadmillPace(treadmillSplit.time) : '-'}
+                    <tbody key={result.id} className={`leaderboard-row-group ${isEstimated ? 'estimated-row' : ''}`}>
+                      <tr className="leaderboard-row-main">
+                        <td className="rank">{index + 1}</td>
+                        <td className="name">
+                          {result.personName}
+                          {isEstimated && <span className="estimated-badge">(Est.)</span>}
+                        </td>
+                        {viewMode !== 'simple' && (
+                          <>
+                            <td className={treadmillSplit && (treadmillSplit as any).isEstimated ? 'estimated-split' : ''}>
+                              <div className="split-time-wrapper">
+                                <div className="split-time">
+                                  {treadmillSplit ? formatTimeHMS(treadmillSplit.time) : '-'}
+                                </div>
+                                {viewMode === 'detailed' && treadmillSplit && (
+                                  <div className={`pace pace-mobile ${getPaceColor(calculateTreadmillPace(treadmillSplit.time), 'treadmill')}`}>
+                                    {calculateTreadmillPace(treadmillSplit.time).toFixed(1)}
+                                  </div>
+                                )}
+                              </div>
                             </td>
-                          )}
-                          <td className={skiErgSplit && (skiErgSplit as any).isEstimated ? 'estimated-split' : ''}>
-                            {skiErgSplit ? formatTimeHMS(skiErgSplit.time) : '-'}
-                          </td>
-                          {viewMode === 'detailed' && (
-                            <td className={`pace ${skiErgSplit ? getPaceColor(calculateSkiErgPace(skiErgSplit.time), 'skiErg') : ''}`}>
-                              {skiErgSplit ? formatPacePer500m(skiErgSplit.time) : '-'}
+                            {viewMode === 'detailed' && (
+                              <td className={`pace pace-desktop ${treadmillSplit ? getPaceColor(calculateTreadmillPace(treadmillSplit.time), 'treadmill') : ''}`}>
+                                {treadmillSplit ? formatTreadmillPace(treadmillSplit.time) : '-'}
+                              </td>
+                            )}
+                            <td className={skiErgSplit && (skiErgSplit as any).isEstimated ? 'estimated-split' : ''}>
+                              <div className="split-time-wrapper">
+                                <div className="split-time">
+                                  {skiErgSplit ? formatTimeHMS(skiErgSplit.time) : '-'}
+                                </div>
+                                {viewMode === 'detailed' && skiErgSplit && (
+                                  <div className={`pace pace-mobile ${getPaceColor(calculateSkiErgPace(skiErgSplit.time), 'skiErg')}`}>
+                                    {formatPacePer500m(skiErgSplit.time)}
+                                  </div>
+                                )}
+                              </div>
                             </td>
-                          )}
-                          <td className={rowingSplit && (rowingSplit as any).isEstimated ? 'estimated-split' : ''}>
-                            {rowingSplit ? formatTimeHMS(rowingSplit.time) : '-'}
-                          </td>
-                          {viewMode === 'detailed' && (
-                            <td className={`pace ${rowingSplit ? getPaceColor(calculateRowingPace(rowingSplit.time), 'rowing') : ''}`}>
-                              {rowingSplit ? formatRowingPace(rowingSplit.time) : '-'}
+                            {viewMode === 'detailed' && (
+                              <td className={`pace pace-desktop ${skiErgSplit ? getPaceColor(calculateSkiErgPace(skiErgSplit.time), 'skiErg') : ''}`}>
+                                {skiErgSplit ? formatPacePer500m(skiErgSplit.time) : '-'}
+                              </td>
+                            )}
+                            <td className={rowingSplit && (rowingSplit as any).isEstimated ? 'estimated-split' : ''}>
+                              <div className="split-time-wrapper">
+                                <div className="split-time">
+                                  {rowingSplit ? formatTimeHMS(rowingSplit.time) : '-'}
+                                </div>
+                                {viewMode === 'detailed' && rowingSplit && (
+                                  <div className={`pace pace-mobile ${getPaceColor(calculateRowingPace(rowingSplit.time), 'rowing')}`}>
+                                    {formatRowingPace(rowingSplit.time)}
+                                  </div>
+                                )}
+                              </div>
                             </td>
-                          )}
-                        </>
-                      )}
-                      <td className="total-time">
-                        {formatTimeHMS(result.totalTime)}
-                        {isEstimated && <span className="estimated-indicator">*</span>}
-                      </td>
-                    </tr>
+                            {viewMode === 'detailed' && (
+                              <td className={`pace pace-desktop ${rowingSplit ? getPaceColor(calculateRowingPace(rowingSplit.time), 'rowing') : ''}`}>
+                                {rowingSplit ? formatRowingPace(rowingSplit.time) : '-'}
+                              </td>
+                            )}
+                          </>
+                        )}
+                        <td className={`total-time ${viewMode === 'detailed' ? 'total-time-detailed' : ''}`}>
+                          {formatTimeHMS(result.totalTime)}
+                          {isEstimated && <span className="estimated-indicator">*</span>}
+                        </td>
+                      </tr>
+                    </tbody>
                   );
                 })}
-              </tbody>
             </table>
           </div>
         </>
