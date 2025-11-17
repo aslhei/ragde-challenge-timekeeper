@@ -10,7 +10,7 @@ export function PersonBrowser() {
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [personResults, setPersonResults] = useState<RaceResult[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
-  const { isAdmin } = useAuth();
+  const { isAdmin, isUser, user } = useAuth();
 
   useEffect(() => {
     loadPersons();
@@ -63,6 +63,24 @@ export function PersonBrowser() {
       loadPersons();
       if (selectedPerson?.id === person.id) {
         setSelectedPerson(null);
+      }
+    }
+  };
+
+  const handleDeleteResult = (result: RaceResult, event: React.MouseEvent) => {
+    event.stopPropagation();
+    
+    // Check permissions: Admins can delete any result, users can only delete their own
+    const currentUserId = user?.email || user?.uid;
+    if (!isAdmin && result.createdBy && result.createdBy !== currentUserId) {
+      alert('You can only delete race results that you created.');
+      return;
+    }
+    
+    if (window.confirm(`Delete this race result from ${selectedPerson?.name}?`)) {
+      storage.deleteResult(result.id);
+      if (selectedPerson) {
+        loadPersonResults(selectedPerson.id);
       }
     }
   };
@@ -142,14 +160,28 @@ export function PersonBrowser() {
                   const treadmillSplit = result.splits.find(s => s.discipline === 'treadmill');
                   const skiErgSplit = result.splits.find(s => s.discipline === 'skiErg');
                   const rowingSplit = result.splits.find(s => s.discipline === 'rowing');
+                  const currentUserId = user?.email || user?.uid;
+                  const canDelete = isAdmin || 
+                    (isUser && result.createdBy && result.createdBy === currentUserId);
                   
                   return (
                     <div key={result.id} className="person-result-item">
                       <div className="result-header">
-                        <span className="result-date">
-                          {new Date(result.completedAt).toLocaleDateString()}
-                        </span>
-                        <span className="result-total-time">{formatTimeHMS(result.totalTime)}</span>
+                        <div className="result-header-left">
+                          <span className="result-date">
+                            {new Date(result.completedAt).toLocaleDateString()}
+                          </span>
+                          <span className="result-total-time">{formatTimeHMS(result.totalTime)}</span>
+                        </div>
+                        {(isAdmin || isUser) && canDelete && (
+                          <button
+                            className="delete-btn-small"
+                            onClick={(e) => handleDeleteResult(result, e)}
+                            title="Delete this result"
+                          >
+                            ×
+                          </button>
+                        )}
                       </div>
                       <div className="result-splits">
                         <div className="split-info">

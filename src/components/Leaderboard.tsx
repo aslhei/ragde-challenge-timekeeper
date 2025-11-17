@@ -2,10 +2,9 @@ import { useEffect, useState, useMemo } from 'react';
 import { RaceResult, ActiveRace } from '../types';
 import { storage } from '../storage';
 import { formatTimeHMS, formatTreadmillPace, formatPacePer500m, formatRowingPace, calculateTreadmillPace, calculateSkiErgPace, calculateRowingPace } from '../utils/timeFormat';
-import { useAuth } from '../context/AuthContext';
 
 type ViewMode = 'simple' | 'splits' | 'detailed';
-type SortField = 'total' | 'treadmill' | 'skiErg' | 'rowing' | 'date';
+type SortField = 'total' | 'treadmill' | 'skiErg' | 'rowing';
 type SortDirection = 'asc' | 'desc';
 
 interface LeaderboardProps {
@@ -17,7 +16,6 @@ export function Leaderboard({ activeRaces = [] }: LeaderboardProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('splits');
   const [sortField, setSortField] = useState<SortField>('total');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const { isAdmin, isUser, user } = useAuth();
   const [isExpanded, setIsExpanded] = useState(true);
 
   useEffect(() => {
@@ -208,10 +206,6 @@ export function Leaderboard({ activeRaces = [] }: LeaderboardProps) {
           aValue = aRowing?.time || Infinity;
           bValue = bRowing?.time || Infinity;
           break;
-        case 'date':
-          aValue = new Date(a.completedAt).getTime();
-          bValue = new Date(b.completedAt).getTime();
-          break;
       }
 
       if (sortDirection === 'asc') {
@@ -233,21 +227,6 @@ export function Leaderboard({ activeRaces = [] }: LeaderboardProps) {
     }
   };
 
-  const handleDeleteResult = (result: RaceResult, event: React.MouseEvent) => {
-    event.stopPropagation();
-    
-    // Check permissions: Admins can delete any result, users can only delete their own
-    const currentUserId = user?.email || user?.uid;
-    if (!isAdmin && result.createdBy && result.createdBy !== currentUserId) {
-      alert('You can only delete race results that you created.');
-      return;
-    }
-    
-    if (window.confirm(`Delete this race result for ${result.personName}?`)) {
-      storage.deleteResult(result.id);
-      loadResults();
-    }
-  };
 
   // Reload when storage changes (could be improved with event listeners)
   useEffect(() => {
@@ -306,130 +285,104 @@ export function Leaderboard({ activeRaces = [] }: LeaderboardProps) {
         )}
       </div>
       {isExpanded && (
-      <div className="results-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Name</th>
-              {viewMode !== 'simple' && (
-                <>
+        <>
+          {/* Table view */}
+          <div className="results-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  {viewMode !== 'simple' && (
+                    <>
+                      <th 
+                        className="sortable" 
+                        onClick={() => handleSort('treadmill')}
+                        title="Click to sort by Treadmill"
+                      >
+                        Treadmill {sortField === 'treadmill' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </th>
+                      {viewMode === 'detailed' && <th>Treadmill Pace</th>}
+                      <th 
+                        className="sortable" 
+                        onClick={() => handleSort('skiErg')}
+                        title="Click to sort by SkiErg"
+                      >
+                        SkiErg {sortField === 'skiErg' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </th>
+                      {viewMode === 'detailed' && <th>SkiErg Pace</th>}
+                      <th 
+                        className="sortable" 
+                        onClick={() => handleSort('rowing')}
+                        title="Click to sort by Rowing"
+                      >
+                        Rowing {sortField === 'rowing' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </th>
+                      {viewMode === 'detailed' && <th>Rowing Pace</th>}
+                    </>
+                  )}
                   <th 
                     className="sortable" 
-                    onClick={() => handleSort('treadmill')}
-                    title="Click to sort by Treadmill"
+                    onClick={() => handleSort('total')}
+                    title="Click to sort by Total Time"
                   >
-                    Treadmill {sortField === 'treadmill' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    Total Time {sortField === 'total' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
-                  {viewMode === 'detailed' && <th>Treadmill Pace</th>}
-                  <th 
-                    className="sortable" 
-                    onClick={() => handleSort('skiErg')}
-                    title="Click to sort by SkiErg"
-                  >
-                    SkiErg {sortField === 'skiErg' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  {viewMode === 'detailed' && <th>SkiErg Pace</th>}
-                  <th 
-                    className="sortable" 
-                    onClick={() => handleSort('rowing')}
-                    title="Click to sort by Rowing"
-                  >
-                    Rowing {sortField === 'rowing' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  {viewMode === 'detailed' && <th>Rowing Pace</th>}
-                </>
-              )}
-              <th 
-                className="sortable" 
-                onClick={() => handleSort('total')}
-                title="Click to sort by Total Time"
-              >
-                Total Time {sortField === 'total' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </th>
-              <th 
-                className="sortable" 
-                onClick={() => handleSort('date')}
-                title="Click to sort by Date"
-              >
-                Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </th>
-              {(isAdmin || isUser) && <th>Actions</th>}
-            </tr>
-          </thead>
-          <tbody>
+                </tr>
+              </thead>
+              <tbody>
             {sortedResults.map((result, index) => {
               const treadmillSplit = result.splits.find(s => s.discipline === 'treadmill');
               const skiErgSplit = result.splits.find(s => s.discipline === 'skiErg');
               const rowingSplit = result.splits.find(s => s.discipline === 'rowing');
               const isEstimated = 'isEstimated' in result && Boolean(result.isEstimated);
-              const currentUserId = user?.email || user?.uid;
-              const canDelete = !isEstimated && (
-                isAdmin || 
-                (isUser && result.createdBy && result.createdBy === currentUserId)
-              );
               
               return (
-                <tr key={result.id} className={isEstimated ? 'estimated-row' : ''}>
-                  <td className="rank">{index + 1}</td>
-                  <td className="name">
-                    {result.personName}
-                    {isEstimated && <span className="estimated-badge">(Est.)</span>}
-                  </td>
-                  {viewMode !== 'simple' && (
-                    <>
-                      <td className={treadmillSplit && (treadmillSplit as any).isEstimated ? 'estimated-split' : ''}>
-                        {treadmillSplit ? formatTimeHMS(treadmillSplit.time) : '-'}
+                    <tr key={result.id} className={isEstimated ? 'estimated-row' : ''}>
+                      <td className="rank">{index + 1}</td>
+                      <td className="name">
+                        {result.personName}
+                        {isEstimated && <span className="estimated-badge">(Est.)</span>}
                       </td>
-                      {viewMode === 'detailed' && (
-                        <td className={`pace ${treadmillSplit ? getPaceColor(calculateTreadmillPace(treadmillSplit.time), 'treadmill') : ''}`}>
-                          {treadmillSplit ? formatTreadmillPace(treadmillSplit.time) : '-'}
-                        </td>
+                      {viewMode !== 'simple' && (
+                        <>
+                          <td className={treadmillSplit && (treadmillSplit as any).isEstimated ? 'estimated-split' : ''}>
+                            {treadmillSplit ? formatTimeHMS(treadmillSplit.time) : '-'}
+                          </td>
+                          {viewMode === 'detailed' && (
+                            <td className={`pace ${treadmillSplit ? getPaceColor(calculateTreadmillPace(treadmillSplit.time), 'treadmill') : ''}`}>
+                              {treadmillSplit ? formatTreadmillPace(treadmillSplit.time) : '-'}
+                            </td>
+                          )}
+                          <td className={skiErgSplit && (skiErgSplit as any).isEstimated ? 'estimated-split' : ''}>
+                            {skiErgSplit ? formatTimeHMS(skiErgSplit.time) : '-'}
+                          </td>
+                          {viewMode === 'detailed' && (
+                            <td className={`pace ${skiErgSplit ? getPaceColor(calculateSkiErgPace(skiErgSplit.time), 'skiErg') : ''}`}>
+                              {skiErgSplit ? formatPacePer500m(skiErgSplit.time) : '-'}
+                            </td>
+                          )}
+                          <td className={rowingSplit && (rowingSplit as any).isEstimated ? 'estimated-split' : ''}>
+                            {rowingSplit ? formatTimeHMS(rowingSplit.time) : '-'}
+                          </td>
+                          {viewMode === 'detailed' && (
+                            <td className={`pace ${rowingSplit ? getPaceColor(calculateRowingPace(rowingSplit.time), 'rowing') : ''}`}>
+                              {rowingSplit ? formatRowingPace(rowingSplit.time) : '-'}
+                            </td>
+                          )}
+                        </>
                       )}
-                      <td className={skiErgSplit && (skiErgSplit as any).isEstimated ? 'estimated-split' : ''}>
-                        {skiErgSplit ? formatTimeHMS(skiErgSplit.time) : '-'}
+                      <td className="total-time">
+                        {formatTimeHMS(result.totalTime)}
+                        {isEstimated && <span className="estimated-indicator">*</span>}
                       </td>
-                      {viewMode === 'detailed' && (
-                        <td className={`pace ${skiErgSplit ? getPaceColor(calculateSkiErgPace(skiErgSplit.time), 'skiErg') : ''}`}>
-                          {skiErgSplit ? formatPacePer500m(skiErgSplit.time) : '-'}
-                        </td>
-                      )}
-                      <td className={rowingSplit && (rowingSplit as any).isEstimated ? 'estimated-split' : ''}>
-                        {rowingSplit ? formatTimeHMS(rowingSplit.time) : '-'}
-                      </td>
-                      {viewMode === 'detailed' && (
-                        <td className={`pace ${rowingSplit ? getPaceColor(calculateRowingPace(rowingSplit.time), 'rowing') : ''}`}>
-                          {rowingSplit ? formatRowingPace(rowingSplit.time) : '-'}
-                        </td>
-                      )}
-                    </>
-                  )}
-                  <td className="total-time">
-                    {formatTimeHMS(result.totalTime)}
-                    {isEstimated && <span className="estimated-indicator">*</span>}
-                  </td>
-                  <td className="date">
-                    {new Date(result.completedAt).toLocaleDateString()}
-                  </td>
-                  {(isAdmin || isUser) && (
-                    <td className="actions">
-                      {canDelete && (
-                        <button
-                          className="delete-btn-small"
-                          onClick={(e) => handleDeleteResult(result, e)}
-                          title="Delete this result"
-                        >
-                          ×
-                        </button>
-                      )}
-                    </td>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

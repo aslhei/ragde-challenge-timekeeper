@@ -25,12 +25,9 @@ body {
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
   padding: 12px 20px;
-  margin-bottom: 20px;
+  margin-top: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
 }
 
 .navbar-content {
@@ -736,11 +733,14 @@ header p {
 
 .results-table {
   overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 300px;
 }
 
 thead {
@@ -1219,6 +1219,12 @@ tbody tr:hover {
   border-bottom: 1px solid #e0e0e0;
 }
 
+.result-header-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
 .result-date {
   color: #666;
   font-size: 0.9rem;
@@ -1499,7 +1505,7 @@ input:disabled {
 
   .navbar {
     padding: 10px 12px;
-    margin-bottom: 16px;
+    margin-top: 16px;
   }
 
   .navbar-content {
@@ -1792,18 +1798,50 @@ input:disabled {
     min-height: 44px;
   }
 
-  .export-import-controls {
-    width: 100%;
-    flex-direction: column;
-    gap: 8px;
+
+  .results-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .export-btn,
-  .import-btn {
-    width: 100%;
-    padding: 12px;
-    font-size: 1rem;
-    min-height: 44px;
+  table {
+    font-size: 0.85rem;
+  }
+
+  th, td {
+    padding: 8px 6px;
+    font-size: 0.85rem;
+  }
+
+  th {
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .rank {
+    font-size: 0.85rem;
+    min-width: 40px;
+  }
+
+  .name {
+    font-size: 0.85rem;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .total-time {
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+
+  .pace {
+    font-size: 0.75rem;
+  }
+
+  .estimated-badge {
+    font-size: 0.7rem;
   }
 
   /* Collapse toggle - larger touch target */
@@ -1861,11 +1899,6 @@ input:disabled {
     padding: 12px;
   }
 
-  table {
-    font-size: 0.75rem;
-    min-width: 500px;
-  }
-
   .users-table {
     min-width: 600px;
   }
@@ -1873,6 +1906,28 @@ input:disabled {
   th, td {
     padding: 6px 4px;
     font-size: 0.75rem;
+  }
+
+  th {
+    font-size: 0.7rem;
+  }
+
+  .rank {
+    font-size: 0.75rem;
+    min-width: 35px;
+  }
+
+  .name {
+    font-size: 0.75rem;
+    max-width: 100px;
+  }
+
+  .total-time {
+    font-size: 0.85rem;
+  }
+
+  .pace {
+    font-size: 0.65rem;
   }
 
   .make-admin-btn,

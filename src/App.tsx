@@ -41,6 +41,41 @@ function App() {
 
   return (
     <div className="app">
+      <header>
+        <div className="header-top">
+          <div className="logo-left">
+            <Logo />
+          </div>
+          <div className="header-title-section">
+            <h1>Ragde Challenge</h1>
+            <p>Den ultimate challenge: 5000m @ 10% Mølle → 5000m SkiErg → 2000m Roing</p>
+          </div>
+          <div className="logo-right">
+            <Logo />
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <div className="main-content">
+          <div className="right-panel">
+            <Leaderboard key={refreshKey} activeRaces={activeRaces || []} />
+          </div>
+          <div className="left-panel">
+            <ActiveRacesManager 
+              ref={activeRacesRef} 
+              onRaceComplete={handleRaceComplete}
+              onActiveRacesChange={setActiveRaces}
+            />
+            {isUser && <RaceStarter onStartRace={handleStartRace} />}
+            {isUser && <AddPerson onPersonAdded={handlePersonAdded} />}
+            <PersonBrowser />
+            {isUser && <ManualResultEntry onResultSaved={handleResultSaved} />}
+            {isAdmin && <AdminPanel />}
+          </div>
+        </div>
+      </main>
+
       <nav className="navbar">
         <div className="navbar-content">
           {isLoading ? (
@@ -120,41 +155,6 @@ function App() {
           )}
         </div>
       </nav>
-
-      <header>
-        <div className="header-top">
-          <div className="logo-left">
-            <Logo />
-          </div>
-          <div className="header-title-section">
-            <h1>Ragde Challenge</h1>
-            <p>Den ultimate challenge: 5000m @ 10% Mølle → 5000m SkiErg → 2000m Roing</p>
-          </div>
-          <div className="logo-right">
-            <Logo />
-          </div>
-        </div>
-      </header>
-
-      <main>
-        <div className="main-content">
-          <div className="right-panel">
-            <Leaderboard key={refreshKey} activeRaces={activeRaces || []} />
-          </div>
-          <div className="left-panel">
-            <ActiveRacesManager 
-              ref={activeRacesRef} 
-              onRaceComplete={handleRaceComplete}
-              onActiveRacesChange={setActiveRaces}
-            />
-            {isUser && <RaceStarter onStartRace={handleStartRace} />}
-            {isUser && <AddPerson onPersonAdded={handlePersonAdded} />}
-            <PersonBrowser />
-            {isUser && <ManualResultEntry onResultSaved={handleResultSaved} />}
-            {isAdmin && <AdminPanel />}
-          </div>
-        </div>
-      </main>
     </div>
   );
 }
